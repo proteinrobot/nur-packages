@@ -10,7 +10,10 @@
     in
     {
       packages = forAllSystems (system: import ./default.nix {
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = import ./overlays;
+        };
       });
     };
 }

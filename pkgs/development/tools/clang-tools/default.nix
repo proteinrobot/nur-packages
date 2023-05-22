@@ -1,15 +1,15 @@
-{ lib, stdenv, llvmPackages }:
+{ lib, stdenv, clang }:
 
 let
-  unwrapped = llvmPackages.clang-unwrapped;
+  unwrapped = clang.cc;
 
 in stdenv.mkDerivation {
+  inherit clang;
   inherit unwrapped;
 
   pname = "clang-tools";
   version = lib.getVersion unwrapped;
   dontUnpack = true;
-  clang = llvmPackages.clang;
 
   installPhase = ''
     runHook preInstall

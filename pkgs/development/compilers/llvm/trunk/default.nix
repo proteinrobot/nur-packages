@@ -17,7 +17,13 @@
     else pkgs.bintools
 , darwin
 # LLVM release information; specify one of these but not both:
-, gitRelease ? null
+, gitRelease ? 
+  {
+    version = "17.0.0-git";
+    rev = "8e16365cb6162a29a2a8d26f2d5f0081a651d73a";
+    rev-version= "2023-05-24-8e16365";
+    sha256 = "sha256-mBJ2z646YxO4nxCaeLb7pwmnD0eZTvaxucRkcWEUuuY=";
+  }
   # i.e.:
   # {
   #   version = /* i.e. "15.0.0" */;
@@ -25,7 +31,7 @@
   #   rev-version = /* human readable version; i.e. "unstable-2022-26-07" */;
   #   sha256 = /* checksum for this release, can omit if specifying your own `monorepoSrc` */;
   # }
-, officialRelease ? { version = "16.0.1"; sha256 = "sha256-Vr978ZY0i0NkdE/uuwcTccshfAT61KIN6KNq0TdwBNE="; }
+, officialRelease ? null
   # i.e.:
   # {
   #   version = /* i.e. "15.0.0" */;
@@ -39,6 +45,8 @@
 # to you to make sure that the LLVM repo given matches the release configuration
 # specified.
 , monorepoSrc ? null
+, enableCcache ? false
+, ccacheStdenv
 }:
 
 assert let
@@ -53,6 +61,7 @@ in
       (lib.optionalString (gitRelease != null) " — not both"));
 let
   monorepoSrc' = monorepoSrc;
+  stdenv' = stdenv;
 in let
   releaseInfo = if gitRelease != null then rec {
     original = gitRelease;
@@ -99,6 +108,8 @@ in let
       lib.platforms.wasi ++
       lib.platforms.x86;
   };
+
+  stdenv = if enableCcache then ccacheStdenv else stdenv';
 
   tools = lib.makeExtensible (tools: let
     callPackage = newScope (tools // { inherit stdenv cmake ninja libxml2 python3 release_version version monorepoSrc buildLlvmTools; });
@@ -303,9 +314,9 @@ in let
       then libraries.compiler-rt-libc
       else libraries.compiler-rt-no-libc;
 
-    stdenv = overrideCC stdenv buildLlvmTools.clang;
+    stdenv = overrideCC stdenv' buildLlvmTools.clang;
 
-    libcxxStdenv = overrideCC stdenv buildLlvmTools.libcxxClang;
+    libcxxStdenv = overrideCC stdenv' buildLlvmTools.libcxxClang;
 
     libcxxabi = let
       # CMake will "require" a compiler capable of compiling C++ programs
