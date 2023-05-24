@@ -17,13 +17,12 @@
     else pkgs.bintools
 , darwin
 # LLVM release information; specify one of these but not both:
-, gitRelease ? 
-  {
-    version = "17.0.0-git";
-    rev = "8e16365cb6162a29a2a8d26f2d5f0081a651d73a";
-    rev-version= "2023-05-24-8e16365";
-    sha256 = "sha256-mBJ2z646YxO4nxCaeLb7pwmnD0eZTvaxucRkcWEUuuY=";
-  }
+, gitRelease ? {
+  version = "17.0.0-git";
+  rev = "8e16365cb6162a29a2a8d26f2d5f0081a651d73a";
+  rev-version = "2023-05-24-8e16365";
+  sha256 = "sha256-mBJ2z646YxO4nxCaeLb7pwmnD0eZTvaxucRkcWEUuuY=";
+}
   # i.e.:
   # {
   #   version = /* i.e. "15.0.0" */;
@@ -45,8 +44,7 @@
 # to you to make sure that the LLVM repo given matches the release configuration
 # specified.
 , monorepoSrc ? null
-, enableCcache ? false
-, ccacheStdenv
+, ccacheStdenv ? null
 }:
 
 assert let
@@ -109,7 +107,7 @@ in let
       lib.platforms.x86;
   };
 
-  stdenv = if enableCcache then ccacheStdenv else stdenv';
+  stdenv = if ccacheStdenv != null then ccacheStdenv else stdenv';
 
   tools = lib.makeExtensible (tools: let
     callPackage = newScope (tools // { inherit stdenv cmake ninja libxml2 python3 release_version version monorepoSrc buildLlvmTools; });

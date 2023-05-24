@@ -1,26 +1,55 @@
 { pkgs ? import <nixpkgs> { } }:
 
-rec {
-  llvmPackages = pkgs.recurseIntoAttrs (pkgs.callPackage ./pkgs/development/compilers/llvm/trunk {
-    inherit (pkgs.stdenvAdapters) overrideCC;
-    buildLlvmTools = pkgs.buildPackages.llvmPackages.tools;
-    targetLlvmLibraries = pkgs.targetPackages.llvmPackages.libraries or llvmPackages.libraries;
-    targetLlvm = pkgs.targetPackages.llvmPackages.llvm or llvmPackages.llvm;
-  });
+let
+  callPackage = pkgs.lib.callPackageWith (pkgs // pkgs');
 
-  clang = llvmPackages.clang;
+  env = rec {
+    gccForLibs = pkgs.gcc13.cc;
 
-  clang-tools = pkgs.callPackage ./pkgs/development/tools/clang-tools { inherit clang; };
+    gccStdenv = pkgs.gcc13Stdenv;
 
-  withCcache = {
-    llvmPackages = llvmPackages.override {
-      enableCcache = true;
-      ccacheStdenv = pkgs.ccacheStdenv;
-    };
+    stdenv = llvm.llvmPackages.stdenv;
+
+    ccacheStdenv = pkgs.ccacheStdenv.override { stdenv = gccStdenv; };
+
+    mkShell = pkgs.mkShell.override { inherit stdenv; };
+
+    wrapCCWith = { ... }@args:
+      pkgs.wrapCCWith (args // { inherit gccForLibs; });
   };
 
-  ld-is-cxx-hook = pkgs.makeSetupHook { name = "ld-is-cxx-hook"; }
-    ./pkgs/build-support/setup-hooks/ld-is-cxx-hook.sh;
+  llvm = rec {
+    llvmPackages = pkgs.recurseIntoAttrs
+      (callPackage ./pkgs/development/compilers/llvm/trunk {
+        stdenv = env.gccStdenv;
+        inherit (env) ccacheStdenv;
+        inherit (pkgs.stdenvAdapters) overrideCC;
+        buildLlvmTools = llvmPackages.tools;
+        targetLlvmLibraries = llvmPackages.libraries;
+        targetLlvm = llvmPackages.llvm;
+      });
 
-  xmake = pkgs.callPackage ./pkgs/development/tools/build-managers/xmake { };
-}
+    libcxxStdenv = llvmPackages.llvmPackages;
+
+    clang = llvmPackages.clang;
+
+    clang-tools = callPackage ./pkgs/development/tools/clang-tools { };
+  };
+
+  build = {
+    xmake = callPackage ./pkgs/development/tools/build-managers/xmake { };
+
+    ld-is-cxx-hook = pkgs.makeSetupHook { name = "ld-is-cxx-hook"; }
+      ./pkgs/build-support/setup-hooks/ld-is-cxx-hook.sh;
+  };
+
+  libraries = {
+    boost-ut = callPackage ./pkgs/development/libraries/boost-ext/boost-ut { };
+
+    fmt = callPackage ./pkgs/development/libraries/fmt { };
+
+    taskflow = callPackage ./pkgs/development/libraries/taskflow { };
+  };
+
+  pkgs' = env // llvm // build // libraries;
+in pkgs'

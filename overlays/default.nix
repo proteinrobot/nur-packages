@@ -1,3 +1,1 @@
-[
-  (import ./ccache-wrapper.nix)
-]
+[ (import ./ccache-wrapper.nix) ]

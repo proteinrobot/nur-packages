@@ -1,8 +1,4 @@
-{ stdenv
-, lib
-, fetchFromGitHub
-, substituteAll
-}:
+{ stdenv, lib, fetchFromGitHub, substituteAll }:
 stdenv.mkDerivation rec {
   name = "xmake";
   version = "f777cbc1781ce6af19d56decf63c4126dd6b01e8";
@@ -15,9 +11,7 @@ stdenv.mkDerivation rec {
     fetchSubmodules = true;
   };
 
-  patches = [
-    ./xrepo.patch
-  ];
+  patches = [ ./xrepo.patch ];
 
   postPatch = ''
     substituteInPlace scripts/xrepo.sh --replace "@out@" "$out"
