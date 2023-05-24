@@ -19,5 +19,8 @@ rec {
     };
   };
 
+  ld-is-cxx-hook = pkgs.makeSetupHook { name = "ld-is-cxx-hook"; }
+    ./pkgs/build-support/setup-hooks/ld-is-cxx-hook.sh;
+
   xmake = pkgs.callPackage ./pkgs/development/tools/build-managers/xmake { };
 }
