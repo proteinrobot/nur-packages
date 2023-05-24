@@ -1,0 +1,13 @@
+diff --git a/scripts/xrepo.sh b/scripts/xrepo.sh
+index 8d745562e..fc7a64c50 100755
+--- a/scripts/xrepo.sh
++++ b/scripts/xrepo.sh
+@@ -1,7 +1,2 @@
+ #!/usr/bin/env bash
+-BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+-if [ -f "$BASEDIR/xmake" ]; then
+-    $BASEDIR/xmake lua private.xrepo "$@"
+-else
+-    xmake lua private.xrepo "$@"
+-fi
++@out@/bin/xmake lua private.xrepo "$@"

@@ -18,4 +18,6 @@ rec {
       ccacheStdenv = pkgs.ccacheStdenv;
     };
   };
+
+  xmake = pkgs.callPackage ./pkgs/development/tools/build-managers/xmake { };
 }
